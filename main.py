@@ -18,6 +18,7 @@ from sklearn.datasets import make_classification
 def load_and_preprocess_data(file_path):
     try:
         data = pd.read_excel(file_path, sheet_name="Data")
+        data = data.astype(float)
     except Exception as e:
         print(f"Error reading Excel file: {e}")
         return None
@@ -33,7 +34,6 @@ def load_and_preprocess_data(file_path):
 
     data = data.fillna(data.mean())
    
-    print("\nCorrelation Matrix:")
     corr_matrix = data.corr()
     plt.figure(figsize=(10, 6))
     sns.heatmap(corr_matrix, annot=True, fmt=".2f")
