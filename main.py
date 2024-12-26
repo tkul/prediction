@@ -12,6 +12,8 @@ from sklearn.metrics import (
     mean_absolute_error, 
     mean_absolute_percentage_error
 )
+from imblearn.over_sampling import SMOTE
+from sklearn.datasets import make_classification
 
 def load_and_preprocess_data(file_path):
     try:
@@ -28,6 +30,17 @@ def load_and_preprocess_data(file_path):
     
     print("\nMissing Values:")
     print(data.isnull().sum())
+
+    data = data.fillna(data.mean())
+   
+    print("\nCorrelation Matrix:")
+    corr_matrix = data.corr()
+    plt.figure(figsize=(10, 6))
+    sns.heatmap(corr_matrix, annot=True, fmt=".2f")
+    plt.title('Correlation Matrix')
+    plt.tight_layout()
+    plt.savefig('correlation_matrix.png')
+    plt.close()
     
     return data
 
@@ -43,7 +56,7 @@ def preprocess_data(data: pd.DataFrame):
         X_scaled, y, test_size=0.2, train_size=0.8, random_state=42
     )
     
-    return X_train, X_test, y_train, y_test
+    return X_train, X_test, y_train, y_test, X, y
 
 def build_and_evaluate_model(X_train, X_test, y_train, y_test):
     model = RandomForestRegressor(random_state=42, n_estimators=100)
@@ -122,6 +135,31 @@ def hyperparameter_tuning(X_train, X_test, y_train, y_test):
     
     return best_model
 
+def improve_model(X_train, X_test, y_train, y_test, X, y):
+    X, y = make_classification(n_classes=2, class_sep=2, weights=[0.1, 0.9], n_informative=3, n_redundant=1, flip_y=0, n_features=20, n_clusters_per_class=1, n_samples=1000, random_state=10)
+    smote = SMOTE(random_state=42)
+    X_smote, y_smote = smote.fit_resample(X, y)
+
+    X_train, X_test, y_train, y_test = train_test_split(
+        X_smote, y_smote, test_size=0.2, train_size=0.8, random_state=42
+    )
+
+    model = RandomForestRegressor(random_state=42, n_estimators=100)
+    model.fit(X_train, y_train)
+
+    y_pred = model.predict(X_test)
+
+    mse = mean_squared_error(y_test, y_pred)
+    mae = mean_absolute_error(y_test, y_pred)
+    mape = mean_absolute_percentage_error(y_test, y_pred)
+    r2 = r2_score(y_test, y_pred)
+
+    print("\nModel Performance Metrics after SMOTE:")
+    print(f"Mean Squared Error (MSE): {mse:.4f}")
+    print(f"Mean Absolute Error (MAE): {mae:.4f}")
+    print(f"Mean Absolute Percentage Error (MAPE): {mape:.4f}")
+    print(f"R2 Score: {r2:.4f}")
+
 def main():
     file_path = "GR10_Prediction.xlsx"
     
@@ -130,13 +168,15 @@ def main():
     if data is None:
         return
     
-    X_train, X_test, y_train, y_test = preprocess_data(data)
+    X_train, X_test, y_train, y_test, X, y = preprocess_data(data)
     
     initial_model, feature_importance = build_and_evaluate_model(X_train, X_test, y_train, y_test)
     
     best_model = hyperparameter_tuning(X_train, X_test, y_train, y_test)
 
     feature_importance.to_csv('feature_importance.csv', index=False)
+
+    improve_model(X_train, X_test, y_train, y_test, X, y)
 
 if __name__ == "__main__":
     main()
