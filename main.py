@@ -41,7 +41,7 @@ def load_and_preprocess_data(file_path):
     plt.tight_layout()
     plt.savefig('correlation_matrix.png')
     plt.close()
-    
+
     return data
 
 def preprocess_data(data: pd.DataFrame):
@@ -61,14 +61,15 @@ def preprocess_data(data: pd.DataFrame):
 def build_and_evaluate_model(X_train, X_test, y_train, y_test):
     model = RandomForestRegressor(random_state=42, n_estimators=100)
     model.fit(X_train, y_train)
-    
+   
     y_pred = model.predict(X_test)
     
     mse = mean_squared_error(y_test, y_pred)
     mae = mean_absolute_error(y_test, y_pred)
     mape = mean_absolute_percentage_error(y_test, y_pred)
     r2 = r2_score(y_test, y_pred)
-    
+
+    #bu değerleri sunumda yorumlamayı unutmayalım
     print("\nModel Performance Metrics:")
     print(f"Mean Squared Error (MSE): {mse:.4f}")
     print(f"Mean Absolute Error (MAE): {mae:.4f}")
@@ -132,33 +133,9 @@ def hyperparameter_tuning(X_train, X_test, y_train, y_test):
     print("\nBest Model Performance:")
     print(f"Mean Squared Error (MSE): {mse_best:.4f}")
     print(f"R2 Score: {r2_best:.4f}")
-    
+
     return best_model
 
-def improve_model(X_train, X_test, y_train, y_test, X, y):
-    X, y = make_classification(n_classes=2, class_sep=2, weights=[0.1, 0.9], n_informative=3, n_redundant=1, flip_y=0, n_features=20, n_clusters_per_class=1, n_samples=1000, random_state=10)
-    smote = SMOTE(random_state=42)
-    X_smote, y_smote = smote.fit_resample(X, y)
-
-    X_train, X_test, y_train, y_test = train_test_split(
-        X_smote, y_smote, test_size=0.2, train_size=0.8, random_state=42
-    )
-
-    model = RandomForestRegressor(random_state=42, n_estimators=100)
-    model.fit(X_train, y_train)
-
-    y_pred = model.predict(X_test)
-
-    mse = mean_squared_error(y_test, y_pred)
-    mae = mean_absolute_error(y_test, y_pred)
-    mape = mean_absolute_percentage_error(y_test, y_pred)
-    r2 = r2_score(y_test, y_pred)
-
-    print("\nModel Performance Metrics after SMOTE:")
-    print(f"Mean Squared Error (MSE): {mse:.4f}")
-    print(f"Mean Absolute Error (MAE): {mae:.4f}")
-    print(f"Mean Absolute Percentage Error (MAPE): {mape:.4f}")
-    print(f"R2 Score: {r2:.4f}")
 
 def main():
     file_path = "GR10_Prediction.xlsx"
@@ -175,8 +152,6 @@ def main():
     best_model = hyperparameter_tuning(X_train, X_test, y_train, y_test)
 
     feature_importance.to_csv('feature_importance.csv', index=False)
-
-    improve_model(X_train, X_test, y_train, y_test, X, y)
 
 if __name__ == "__main__":
     main()
